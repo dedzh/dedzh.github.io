@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тетрис на GitHub</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #game-board {
+            border: 2px solid #e94560;
+            background-color: #0f3460;
+            display: grid;
+            grid-template-rows: repeat(20, 25px);
+            grid-template-columns: repeat(10, 25px);
+            gap: 1px;
+        }
+        
+        .cell {
+            width: 25px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        
+        .filled {
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 4px;
+        }
+        
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 150px;
+        }
+        
+        .panel-section {
+            background: rgba(15, 52, 96, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e94560;
+        }
+        
+        h1 {
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+            margin-bottom: 10px;
+        }
+        
+        .next-piece {
+            display: grid;
+            grid-template-rows: repeat(4, 20px);
+            grid-template-columns: repeat(4, 20px);
+            gap: 1px;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #ff6b81;
+        }
+        
+        .game-over {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4cc9f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>ТЕТРИС</h1>
+    
+    <div class="game-container">
+        <div id="game-board"></div>
+        
+        <div class="side-panel">
+            <div class="panel-section">
+                <h2>Счет</h2>
+                <div id="score">0</div>
+            </div>
+            
+            <div class="panel-section">
+                <h2>Следующая</h2>
+                <div class="next-piece" id="next-piece"></div>
+            </div>
+            
+            <div class="panel-section">
+                <h2>Управление</h2>
+                <p>← → : Движение</p>
+                <p>↑ : Поворот</p>
+                <p>↓ : Ускорение</p>
+                <p>Пробел : Падение</p>
+                <button id="start-btn">Начать игру</button>
+                <button id="pause-btn">Пауза</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-over" id="game-over">
+        <h2>ИГРА ОКОНЧЕНА!</h2>
+        <p>Ваш счет: <span id="final-score">0</span></p>
+        <button id="restart-btn">Играть снова</button>
+    </div>
+
+    <script>
+        // Конфигурация игры
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 25;
+        const COLORS = [
+            '#000000',  // Пустая клетка
+            '#FF0D72',  // I
+            '#0DC2FF',  // J
+            '#0DFF72',  // L
+            '#F538FF',  // O
+            '#FF8E0D',  // S
+            '#FFE138',  // T
+            '#3877FF'   // Z
+        ];
+
+        // Фигуры тетрамино
+        const SHAPES = [
+            [], // Пустая фигура
+            [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], // I
+            [[1, 0, 0], [1, 1, 1], [0, 0, 0]], // J
+            [[0, 0, 1], [1, 1, 1], [0, 0, 0]], // L
+            [[1, 1], [1, 1]], // O
+            [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S
+            [[0, 1, 0], [1, 1, 1], [0, 0, 0]], // T
+            [[1, 1, 0], [0, 1, 1], [0, 0, 0]]  // Z
+        ];
+
+        // Игровые переменные
+        let board = [];
+        let currentPiece = null;
+        let nextPiece = null;
+        let score = 0;
+        let gameOver = false;
+        let isPaused = false;
+        let dropInterval = null;
+
+        // Инициализация игрового поля
+        function initBoard() {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${r}-${c}`;
+                    gameBoard.appendChild(cell);
+                }
+            }
+        }
+
+        // Создание новой фигуры
+        function createPiece() {
+            const pieceType = Math.floor(Math.random() * 7) + 1;
+            return {
+                type: pieceType,
+                shape: SHAPES[pieceType],
+                row: 0,
+                col: Math.floor((COLS - SHAPES[pieceType][0].length) / 2),
+                rotation: 0
+            };
+        }
+
+        // Отрисовка игрового поля
+        function drawBoard() {
+            // Очистка доски
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.getElementById(`cell-${r}-${c}`);
+                    cell.className = 'cell';
+                    
+                    if (board[r][c]) {
+                        cell.classList.add('filled');
+                        cell.style.backgroundColor = COLORS[board[r][c]];
+                    }
+                }
+            }
+            
+            // Отрисовка текущей фигуры
+            if (currentPiece) {
+                const shape = currentPiece.shape;
+                for (let r = 0; r < shape.length; r++) {
+                    for (let c = 0; c < shape[r].length; c++) {
+                        if (shape[r][c]) {
+                            const boardRow = currentPiece.row + r;
+                            const boardCol = currentPiece.col + c;
+                            
+                            if (boardRow >= 0) {
+                                const cell = document.getElementById(`cell-${boardRow}-${boardCol}`);
+                                if (cell) {
+                                    cell.classList.add('filled');
+                                    cell.style.backgroundColor = COLORS[currentPiece.type];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Отрисовка следующей фигуры
+            const nextPieceContainer = document.getElementById('next-piece');
+            nextPieceContainer.innerHTML = '';
+            
+            if (nextPiece) {
+                const shape = nextPiece.shape;
+                for (let r = 0; r < 4; r++) {
+                    for (let c = 0; c < 4; c++) {
+                        const cell = document.createElement('div');
+                        cell.style.width = '20px';
+                        cell.style.height = '20px';
+                        cell.style.borderRadius = '2px';
+                        
+                        if (r < shape.length && c < shape[r].length && shape[r][c]) {
+                            cell.style.backgroundColor = COLORS[nextPiece.type];
+                            cell.style.border = `2px solid ${COLORS[0]}`;
+                        } else {
+                            cell.style.backgroundColor = 'transparent';
+                        }
+                        
+                        nextPieceContainer.appendChild(cell);
+                    }
+                }
+            }
+            
+            // Обновление счета
+            document.getElementById('score').textContent = score;
+        }
+
+        // Проверка столкновений
+        function checkCollision(piece, rowOffset = 0, colOffset = 0) {
+            const shape = piece.shape;
+            
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (shape[r][c]) {
+                        const newRow = piece.row + r + rowOffset;
+                        const newCol = piece.col + c + colOffset;
+                        
+                        if (
+                            newCol < 0 || 
+                            newCol >= COLS || 
+                            newRow >= ROWS ||
+                            (newRow >= 0 && board[newRow][newCol])
+                        ) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // Фиксация фигуры на поле
+        function lockPiece() {
+            const shape = currentPiece.shape;
+            
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[r].length; c++) {
+                    if (shape[r][c]) {
+                        const boardRow = currentPiece.row + r;
+                        const boardCol = currentPiece.col + c;
+                        
+                        if (boardRow < 0) {
+                            gameOver = true;
+                            return;
+                        }
+                        
+                        board[boardRow][boardCol] = currentPiece.type;
+                    }
+                }
+            }
+            
+            // Проверка заполненных линий
+            clearLines();
+            
+            // Создание новой фигуры
+            currentPiece = nextPiece;
+            nextPiece = createPiece();
+        }
+
+        // Очистка заполненных линий
+        function clearLines() {
+            let linesCleared = 0;
+            
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r].every(cell => cell !== 0)) {
+                    // Удаление линии
+                    for (let row = r; row > 0; row--) {
+                        board[row] = [...board[row - 1]];
+                    }
+                    
+                    board[0] = Array(COLS).fill(0);
+                    linesCleared++;
+                    r++; // Проверить ту же строку снова
+                }
+            }
+            
+            // Обновление счета
+            if (linesCleared > 0) {
+                score += [100, 300, 700, 1500][linesCleared - 1] || 0;
+            }
+        }
+
+        // Движение фигуры
+        function movePiece(dRow, dCol) {
+            if (gameOver || isPaused) return;
+            
+            if (!checkCollision(currentPiece, dRow, dCol)) {
+                currentPiece.row += dRow;
+                currentPiece.col += dCol;
+                drawBoard();
+                return true;
+            }
+            
+            // Если движение вниз и столкновение - фиксация фигуры
+            if (dRow > 0) {
+                lockPiece();
+                drawBoard();
+            }
+            
+            return false;
+        }
+
+        // Вращение фигуры
+        function rotatePiece() {
+            if (gameOver || isPaused) return;
+            
+            const originalRotation = currentPiece.rotation;
+            currentPiece.rotation = (currentPiece.rotation + 1) % 4;
+            
+            // Поворот матрицы фигуры
+            const originalShape = currentPiece.shape;
+            const rows = originalShape.length;
+            const cols = originalShape[0].length;
+            
+            // Создаем новую матрицу для повернутой фигуры
+            const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
+            
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    rotated[c][rows - 1 - r] = originalShape[r][c];
+                }
+            }
+            
+            currentPiece.shape = rotated;
+            
+            // Если после вращения есть столкновение - возвращаем исходное состояние
+            if (checkCollision(currentPiece)) {
+                currentPiece.rotation = originalRotation;
+                currentPiece.shape = originalShape;
+            } else {
+                drawBoard();
+            }
+        }
+
+        // Падение фигуры
+        function dropPiece() {
+            if (gameOver || isPaused) return;
+            
+            while (movePiece(1, 0)) {
+                // Продолжаем двигать вниз
+            }
+        }
+
+        // Игровой цикл
+        function gameLoop() {
+            if (gameOver) {
+                clearInterval(dropInterval);
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('game-over').style.display = 'block';
+                return;
+            }
+            
+            movePiece(1, 0);
+        }
+
+        // Инициализация игры
+        function initGame() {
+            initBoard();
+            score = 0;
+            gameOver = false;
+            isPaused = false;
+            
+            // Создание начальных фигур
+            currentPiece = createPiece();
+            nextPiece = createPiece();
+            
+            // Отрисовка начального состояния
+            drawBoard();
+            
+            // Запуск игрового цикла
+            if (dropInterval) clearInterval(dropInterval);
+            dropInterval = setInterval(gameLoop, 500);
+            
+            // Скрытие экрана "Игра окончена"
+            document.getElementById('game-over').style.display = 'none';
+        }
+
+        // Обработка нажатий клавиш
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            
+            switch (e.key) {
+                case 'ArrowLeft':
+                    movePiece(0, -1);
+                    break;
+                case 'ArrowRight':
+                    movePiece(0, 1);
+                    break;
+                case 'ArrowDown':
+                    movePiece(1, 0);
+                    break;
+                case 'ArrowUp':
+                    rotatePiece();
+                    break;
+                case ' ':
+                    dropPiece();
+                    break;
+                case 'p':
+                case 'P':
+                    togglePause();
+                    break;
+            }
+        });
+
+        // Кнопки управления
+        document.getElementById('start-btn').addEventListener('click', initGame);
+        document.getElementById('restart-btn').addEventListener('click', initGame);
+        
+        document.getElementById('pause-btn').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = 
+                isPaused ? 'Продолжить' : 'Пауза';
+        });
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = 
+                isPaused ? 'Продолжить' : 'Пауза';
+        }
+
+        // Запуск игры при загрузке страницы
+        window.onload = initGame;
+    </script>
+</body>
+</html>
