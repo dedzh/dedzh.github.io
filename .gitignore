@@ -1,0 +1,30 @@
+# Игнорируем файлы окружения
+.env
+.venv/
+env/
+
+# Файлы кэша Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Файлы IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Временные файлы
+*.swp
+*.bak
+*.tmp
+*~
+
+# Логи
+*.log
+
+# Файлы сборки
+build/
+dist/
+*.egg-info/
+*.spec
