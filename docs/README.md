@@ -17,7 +17,7 @@
 ## Как играть
 
 Игра доступна по адресу:  
-https://dedzh.github.io/tetris-html/
+https://dedzh.github.io/
 
 ### Управление
 
