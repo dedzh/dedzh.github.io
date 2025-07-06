@@ -4,10 +4,282 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Тетрис в браузере</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #e94560;
+            text-shadow: 0 0 15px rgba(233, 69, 96, 0.7);
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #4cc9f0;
+            margin-bottom: 25px;
+        }
+        
+        .game-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 20px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+        }
+        
+        #game-board {
+            border: 3px solid #e94560;
+            background-color: #0f3460;
+            display: grid;
+            grid-template-rows: repeat(20, 25px);
+            grid-template-columns: repeat(10, 25px);
+            gap: 1px;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
+        }
+        
+        .cell {
+            width: 25px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            transition: background-color 0.1s;
+        }
+        
+        .filled {
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 4px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .preview {
+            opacity: 0.5;
+            border: 2px dashed rgba(255, 255, 255, 0.7) !important;
+        }
+        
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            min-width: 180px;
+        }
+        
+        .panel-section {
+            background: rgba(15, 52, 96, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e94560;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+        }
+        
+        .panel-title {
+            color: #e94560;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 5px rgba(233, 69, 96, 0.5);
+        }
+        
+        .next-piece {
+            display: grid;
+            grid-template-rows: repeat(4, 20px);
+            grid-template-columns: repeat(4, 20px);
+            gap: 1px;
+            margin: 15px auto 0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #e94560, #c62d48);
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: linear-gradient(to bottom, #ff6b81, #e94560);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        #score {
+            font-size: 2.2rem;
+            font-weight: bold;
+            text-align: center;
+            color: #4cc9f0;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.5);
+            margin: 10px 0;
+        }
+        
+        .level-display {
+            font-size: 1.3rem;
+            color: #a6ff00;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .game-over {
+            position: absolute;
+            background: rgba(10, 15, 40, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 10;
+            border: 3px solid #e94560;
+            box-shadow: 0 0 40px rgba(233, 69, 96, 0.5);
+            max-width: 90%;
+        }
+        
+        .game-over h2 {
+            font-size: 2.5rem;
+            color: #e94560;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.7);
+        }
+        
+        .instructions {
+            background: rgba(15, 52, 96, 0.7);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #4cc9f0;
+            box-shadow: 0 0 15px rgba(76, 201, 240, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        .instructions h2 {
+            color: #4cc9f0;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .keyboard-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .control-group {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .key {
+            background: #e94560;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #8c9db5;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .scrollable-div {
+            width: 300px;
+            height: 200px;
+            overflow: auto;
+            border: 1px solid black;
+            padding: 10px;
+        }
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .keyboard-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
+        
         <header>
             <h1>ТЕТРИС</h1>
             <div class="subtitle">Классическая игра прямо в вашем браузере</div>
@@ -88,7 +360,7 @@
                 </div>
             </div>
         </div>
-        
+       
         <div class="game-over" id="game-over">
             <h2>ИГРА ОКОНЧЕНА!</h2>
             <p>Ваш счет: <span id="final-score">0</span></p>
@@ -103,77 +375,56 @@
     </div>
 
     <script>
-        /**
-         * Классическая игра Тетрис
-         * @module TetrisGame
-         * @author [Ваше имя]
-         * @version 1.0.0
-         */
+        // Конфигурация игры
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 25;
+        const COLORS = [
+            '#000000',  // Пустая клетка
+            '#FF0D72',  // I
+            '#0DC2FF',  // J
+            '#0DFF72',  // L
+            '#F538FF',  // O
+            '#FF8E0D',  // S
+            '#FFE138',  // T
+            '#3877FF'   // Z
+        ];
 
-        /** Конфигурация игры */
-        const CONFIG = {
-            COLS: 10,           // Количество колонок на игровом поле
-            ROWS: 20,           // Количество строк на игровом поле
-            BLOCK_SIZE: 25,     // Размер блока в пикселях
-            COLORS: [           // Цвета фигур
-                '#000000',      // Пустая клетка
-                '#FF0D72',      // I
-                '#0DC2FF',      // J
-                '#0DFF72',      // L
-                '#F538FF',      // O
-                '#FF8E0D',      // S
-                '#FFE138',      // T
-                '#3877FF'       // Z
-            ],
-            SHAPES: [           // Формы фигур
-                [],             // Пустая фигура
-                [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], // I
-                [[1,0,0], [1,1,1], [0,0,0]],                  // J
-                [[0,0,1], [1,1,1], [0,0,0]],                  // L
-                [[1,1], [1,1]],                               // O
-                [[0,1,1], [1,1,0], [0,0,0]],                  // S
-                [[0,1,0], [1,1,1], [0,0,0]],                  // T
-                [[1,1,0], [0,1,1], [0,0,0]]                   // Z
-            ],
-            SCORE_VALUES: [    // Очки за очищенные линии
-                0,      // 0 линий
-                100,     // 1 линия
-                300,     // 2 линии
-                700,     // 3 линии
-                1500     // 4 линии
-            ],
-            INITIAL_SPEED: 500, // Начальная скорость падения (мс)
-            SPEED_STEP: 50      // Уменьшение скорости за уровень (мс)
-        };
+        // Фигуры тетрамино
+        const SHAPES = [
+            [], // Пустая фигура
+            [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], // I
+            [[1, 0, 0], [1, 1, 1], [0, 0, 0]], // J
+            [[0, 0, 1], [1, 1, 1], [0, 0, 0]], // L
+            [[1, 1], [1, 1]], // O
+            [[0, 1, 1], [1, 1, 0], [0, 0, 0]], // S
+            [[0, 1, 0], [1, 1, 1], [0, 0, 0]], // T
+            [[1, 1, 0], [0, 1, 1], [0, 0, 0]]  // Z
+        ];
 
-        /** Состояние игры */
-        const gameState = {
-            board: [],          // Игровое поле
-            currentPiece: null, // Текущая фигура
-            nextPiece: null,    // Следующая фигура
-            holdPiece: null,    // Фигура в кармане
-            canHold: true,      // Можно ли сейчас использовать карман
-            score: 0,           // Текущий счет
-            level: 1,          // Текущий уровень
-            linesCleared: 0,    // Всего очищено линий
-            gameOver: false,    // Игра завершена
-            isPaused: false,    // Игра на паузе
-            dropInterval: null, // Интервал падения
-            dropSpeed: CONFIG.INITIAL_SPEED // Текущая скорость
-        };
+        // Игровые переменные
+        let board = [];
+        let currentPiece = null;
+        let nextPiece = null;
+        let holdPiece = null;
+        let canHold = true;
+        let score = 0;
+        let level = 1;
+        let linesCleared = 0;
+        let gameOver = false;
+        let isPaused = false;
+        let dropInterval = null;
+        let dropSpeed = 500;
 
-        /**
-         * Инициализирует игровое поле
-         * @function initBoard
-         */
+        // Инициализация игрового поля
         function initBoard() {
             const gameBoard = document.getElementById('game-board');
             gameBoard.innerHTML = '';
             
-            gameState.board = Array.from({ length: CONFIG.ROWS }, () => Array(CONFIG.COLS).fill(0));
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
             
-            for (let r = 0; r < CONFIG.ROWS; r++) {
-                for (let c = 0; c < CONFIG.COLS; c++) {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
                     cell.id = `cell-${r}-${c}`;
@@ -182,48 +433,43 @@
             }
         }
 
-        /**
-         * Создает новую случайную фигуру
-         * @function createPiece
-         * @returns {Object} Новая фигура
-         */
+        // Создание новой фигуры
         function createPiece() {
             const pieceType = Math.floor(Math.random() * 7) + 1;
             return {
                 type: pieceType,
-                shape: CONFIG.SHAPES[pieceType],
+                shape: SHAPES[pieceType],
                 row: 0,
-                col: Math.floor((CONFIG.COLS - CONFIG.SHAPES[pieceType][0].length) / 2),
+                col: Math.floor((COLS - SHAPES[pieceType][0].length) / 2),
                 rotation: 0
             };
         }
 
-        /**
-         * Отрисовывает игровое поле и все элементы
-         * @function drawBoard
-         */
+        // Отрисовка игрового поля
         function drawBoard() {
             // Очистка поля
-            for (let r = 0; r < CONFIG.ROWS; r++) {
-                for (let c = 0; c < CONFIG.COLS; c++) {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
                     const cell = document.getElementById(`cell-${r}-${c}`);
                     if (cell) {
+                        // Сброс стилей
                         cell.className = 'cell';
                         cell.style.backgroundColor = '';
                         cell.style.border = '';
                         cell.style.boxShadow = '';
                         
-                        if (gameState.board[r][c]) {
+                        // Отрисовка статичных блоков
+                        if (board[r][c]) {
                             cell.classList.add('filled');
-                            cell.style.backgroundColor = CONFIG.COLORS[gameState.board[r][c]];
+                            cell.style.backgroundColor = COLORS[board[r][c]];
                         }
                     }
                 }
             }
             
             // Отрисовка предпросмотра падения
-            if (gameState.currentPiece && !gameState.gameOver) {
-                const previewPiece = {...gameState.currentPiece};
+            if (currentPiece && !gameOver) {
+                const previewPiece = {...currentPiece};
                 while (!checkCollision({...previewPiece, row: previewPiece.row + 1})) {
                     previewPiece.row++;
                 }
@@ -235,12 +481,11 @@
                             const boardRow = previewPiece.row + r;
                             const boardCol = previewPiece.col + c;
                             
-                            if (boardRow >= 0 && boardRow < CONFIG.ROWS && 
-                                boardCol >= 0 && boardCol < CONFIG.COLS) {
+                            if (boardRow >= 0 && boardRow < ROWS && boardCol >= 0 && boardCol < COLS) {
                                 const cell = document.getElementById(`cell-${boardRow}-${boardCol}`);
-                                if (cell && !gameState.board[boardRow][boardCol]) {
+                                if (cell && !board[boardRow][boardCol]) {
                                     cell.classList.add('preview');
-                                    cell.style.backgroundColor = CONFIG.COLORS[gameState.currentPiece.type];
+                                    cell.style.backgroundColor = COLORS[currentPiece.type];
                                 }
                             }
                         }
@@ -249,20 +494,20 @@
             }
             
             // Отрисовка текущей фигуры
-            if (gameState.currentPiece && !gameState.gameOver) {
-                const shape = gameState.currentPiece.shape;
+            if (currentPiece && !gameOver) {
+                const shape = currentPiece.shape;
                 for (let r = 0; r < shape.length; r++) {
                     for (let c = 0; c < shape[r].length; c++) {
                         if (shape[r][c]) {
-                            const boardRow = gameState.currentPiece.row + r;
-                            const boardCol = gameState.currentPiece.col + c;
+                            const boardRow = currentPiece.row + r;
+                            const boardCol = currentPiece.col + c;
                             
-                            if (boardRow >= 0 && boardRow < CONFIG.ROWS && 
-                                boardCol >= 0 && boardCol < CONFIG.COLS) {
+                            // Проверка границ
+                            if (boardRow >= 0 && boardRow < ROWS && boardCol >= 0 && boardCol < COLS) {
                                 const cell = document.getElementById(`cell-${boardRow}-${boardCol}`);
                                 if (cell) {
                                     cell.classList.add('filled');
-                                    cell.style.backgroundColor = CONFIG.COLORS[gameState.currentPiece.type];
+                                    cell.style.backgroundColor = COLORS[currentPiece.type];
                                 }
                             }
                         }
@@ -274,8 +519,8 @@
             const nextPieceContainer = document.getElementById('next-piece');
             nextPieceContainer.innerHTML = '';
             
-            if (gameState.nextPiece) {
-                const shape = gameState.nextPiece.shape;
+            if (nextPiece) {
+                const shape = nextPiece.shape;
                 for (let r = 0; r < 4; r++) {
                     for (let c = 0; c < 4; c++) {
                         const cell = document.createElement('div');
@@ -284,8 +529,8 @@
                         cell.style.borderRadius = '3px';
                         
                         if (r < shape.length && c < shape[r].length && shape[r][c]) {
-                            cell.style.backgroundColor = CONFIG.COLORS[gameState.nextPiece.type];
-                            cell.style.border = `2px solid ${CONFIG.COLORS[0]}`;
+                            cell.style.backgroundColor = COLORS[nextPiece.type];
+                            cell.style.border = `2px solid ${COLORS[0]}`;
                         } else {
                             cell.style.backgroundColor = 'transparent';
                         }
@@ -299,8 +544,8 @@
             const holdPieceContainer = document.getElementById('hold-piece');
             holdPieceContainer.innerHTML = '';
             
-            if (gameState.holdPiece) {
-                const shape = CONFIG.SHAPES[gameState.holdPiece.type];
+            if (holdPiece) {
+                const shape = SHAPES[holdPiece.type];
                 for (let r = 0; r < 4; r++) {
                     for (let c = 0; c < 4; c++) {
                         const cell = document.createElement('div');
@@ -309,8 +554,8 @@
                         cell.style.borderRadius = '3px';
                         
                         if (r < shape.length && c < shape[r].length && shape[r][c]) {
-                            cell.style.backgroundColor = CONFIG.COLORS[gameState.holdPiece.type];
-                            cell.style.border = `2px solid ${CONFIG.COLORS[0]}`;
+                            cell.style.backgroundColor = COLORS[holdPiece.type];
+                            cell.style.border = `2px solid ${COLORS[0]}`;
                         } else {
                             cell.style.backgroundColor = 'transparent';
                         }
@@ -320,17 +565,12 @@
                 }
             }
             
-            // Обновление UI
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('level').textContent = gameState.level;
+            // Обновление счета и уровня
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
         }
 
-        /**
-         * Проверяет столкновение фигуры с границами или другими фигурами
-         * @function checkCollision
-         * @param {Object} piece - Фигура для проверки
-         * @returns {boolean} Есть ли столкновение
-         */
+        // Проверка столкновений
         function checkCollision(piece) {
             const shape = piece.shape;
             
@@ -340,11 +580,12 @@
                         const newRow = piece.row + r;
                         const newCol = piece.col + c;
                         
+                        // Проверка выхода за границы
                         if (
                             newCol < 0 || 
-                            newCol >= CONFIG.COLS || 
-                            newRow >= CONFIG.ROWS ||
-                            (newRow >= 0 && gameState.board[newRow][newCol])
+                            newCol >= COLS || 
+                            newRow >= ROWS ||
+                            (newRow >= 0 && board[newRow][newCol])
                         ) {
                             return true;
                         }
@@ -355,60 +596,62 @@
             return false;
         }
 
-        /**
-         * Фиксирует текущую фигуру на игровом поле
-         * @function lockPiece
-         */
+        // Фиксация фигуры на поле
         function lockPiece() {
-            const shape = gameState.currentPiece.shape;
+            const shape = currentPiece.shape;
             
             for (let r = 0; r < shape.length; r++) {
                 for (let c = 0; c < shape[r].length; c++) {
                     if (shape[r][c]) {
-                        const boardRow = gameState.currentPiece.row + r;
-                        const boardCol = gameState.currentPiece.col + c;
+                        const boardRow = currentPiece.row + r;
+                        const boardCol = currentPiece.col + c;
                         
+                        // Проверка выхода за верхнюю границу
                         if (boardRow < 0) {
                             endGame();
                             return;
                         }
                         
-                        gameState.board[boardRow][boardCol] = gameState.currentPiece.type;
+                        // Фиксация фигуры
+                        board[boardRow][boardCol] = currentPiece.type;
                     }
                 }
             }
             
+            // Проверка заполненных линий
             clearLines();
             
-            gameState.currentPiece = gameState.nextPiece;
-            gameState.nextPiece = createPiece();
-            gameState.canHold = true;
+            // Создание новой фигуры
+            currentPiece = nextPiece;
+            nextPiece = createPiece();
+            canHold = true; // Разрешаем обмен после фиксации фигуры
             
-            if (checkCollision(gameState.currentPiece)) {
+            // Проверка на завершение игры
+            if (checkCollision(currentPiece)) {
                 endGame();
             }
             
+            // Перерисовка поля
             drawBoard();
         }
 
-        /**
-         * Очищает заполненные линии и обновляет счет
-         * @function clearLines
-         */
+        // Очистка заполненных линий
         function clearLines() {
             let linesClearedThisTurn = 0;
             const linesToClear = [];
             
-            for (let r = CONFIG.ROWS - 1; r >= 0; r--) {
-                if (gameState.board[r].every(cell => cell !== 0)) {
+            // Определяем линии для очистки
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r].every(cell => cell !== 0)) {
                     linesToClear.push(r);
                     linesClearedThisTurn++;
                 }
             }
             
             if (linesClearedThisTurn > 0) {
+                // Анимация очистки
                 linesToClear.forEach(r => {
-                    for (let c = 0; c < CONFIG.COLS; c++) {
+                    for (let c = 0; c < COLS; c++) {
                         const cell = document.getElementById(`cell-${r}-${c}`);
                         if (cell) {
                             cell.style.backgroundColor = '#FFFFFF';
@@ -416,59 +659,59 @@
                     }
                 });
                 
+                // Ожидание завершения анимации
                 setTimeout(() => {
+                    // Удаление линий
                     linesToClear.sort((a, b) => a - b);
                     linesToClear.forEach(r => {
+                        // Сдвигаем все линии выше вниз
                         for (let row = r; row > 0; row--) {
-                            gameState.board[row] = [...gameState.board[row - 1]];
+                            board[row] = [...board[row - 1]];
                         }
-                        gameState.board[0] = Array(CONFIG.COLS).fill(0);
+                        board[0] = Array(COLS).fill(0);
                     });
                     
-                    gameState.linesCleared += linesClearedThisTurn;
-                    gameState.score += CONFIG.SCORE_VALUES[linesClearedThisTurn] || 0;
+                    // Обновление счета
+                    linesCleared += linesClearedThisTurn;
+                    score += [100, 300, 700, 1500][linesClearedThisTurn - 1] || 0;
                     
-                    const newLevel = Math.floor(gameState.linesCleared / 10) + 1;
-                    if (newLevel > gameState.level) {
-                        gameState.level = newLevel;
-                        gameState.dropSpeed = Math.max(
-                            100, 
-                            CONFIG.INITIAL_SPEED - (gameState.level - 1) * CONFIG.SPEED_STEP
-                        );
+                    // Обновление уровня
+                    const newLevel = Math.floor(linesCleared / 10) + 1;
+                    if (newLevel > level) {
+                        level = newLevel;
+                        dropSpeed = Math.max(100, 500 - (level - 1) * 50);
                         
-                        if (gameState.dropInterval) {
-                            clearInterval(gameState.dropInterval);
-                            gameState.dropInterval = setInterval(gameLoop, gameState.dropSpeed);
+                        if (dropInterval) {
+                            clearInterval(dropInterval);
+                            dropInterval = setInterval(gameLoop, dropSpeed);
                         }
                     }
                     
+                    // Перерисовка поля
                     drawBoard();
                 }, 300);
             }
         }
 
-        /**
-         * Перемещает текущую фигуру
-         * @function movePiece
-         * @param {number} dRow - Изменение по вертикали
-         * @param {number} dCol - Изменение по горизонтали
-         * @returns {boolean} Удалось ли переместить
-         */
+        // Движение фигуры
         function movePiece(dRow, dCol) {
-            if (gameState.gameOver || gameState.isPaused) return false;
+            if (gameOver || isPaused) return false;
             
+            // Создаем временную копию фигуры для проверки
             const testPiece = {
-                ...gameState.currentPiece,
-                row: gameState.currentPiece.row + dRow,
-                col: gameState.currentPiece.col + dCol
+                ...currentPiece,
+                row: currentPiece.row + dRow,
+                col: currentPiece.col + dCol
             };
             
+            // Проверка возможности перемещения
             if (!checkCollision(testPiece)) {
-                gameState.currentPiece.row = testPiece.row;
-                gameState.currentPiece.col = testPiece.col;
+                currentPiece.row = testPiece.row;
+                currentPiece.col = testPiece.col;
                 drawBoard();
                 return true;
             } 
+            // Если движение вниз и столкновение - фиксируем фигуру
             else if (dRow > 0) {
                 lockPiece();
                 return false;
@@ -477,20 +720,20 @@
             return false;
         }
 
-        /**
-         * Вращает текущую фигуру
-         * @function rotatePiece
-         */
+        // Вращение фигуры
         function rotatePiece() {
-            if (gameState.gameOver || gameState.isPaused) return;
+            if (gameOver || isPaused) return;
             
-            const originalShape = [...gameState.currentPiece.shape.map(row => [...row])];
-            const originalRotation = gameState.currentPiece.rotation;
+            // Сохраняем исходное состояние
+            const originalShape = [...currentPiece.shape.map(row => [...row])];
+            const originalRotation = currentPiece.rotation;
             
-            gameState.currentPiece.rotation = (gameState.currentPiece.rotation + 1) % 4;
+            // Поворачиваем фигуру
+            currentPiece.rotation = (currentPiece.rotation + 1) % 4;
             const rows = originalShape.length;
             const cols = originalShape[0].length;
             
+            // Создаем повернутую матрицу
             const rotated = Array.from({ length: cols }, () => Array(rows).fill(0));
             for (let r = 0; r < rows; r++) {
                 for (let c = 0; c < cols; c++) {
@@ -498,162 +741,181 @@
                 }
             }
             
-            gameState.currentPiece.shape = rotated;
+            // Применяем поворот
+            currentPiece.shape = rotated;
             
-            if (checkCollision(gameState.currentPiece)) {
-                gameState.currentPiece.rotation = originalRotation;
-                gameState.currentPiece.shape = originalShape;
+            // Если после вращения есть столкновение - возвращаем исходное состояние
+            if (checkCollision(currentPiece)) {
+                currentPiece.rotation = originalRotation;
+                currentPiece.shape = originalShape;
             }
             
+            // Перерисовка поля
             drawBoard();
         }
 
-        /**
-         * Мгновенно опускает фигуру вниз
-         * @function dropPiece
-         */
+        // Падение фигуры
         function dropPiece() {
-            if (gameState.gameOver || gameState.isPaused) return;
+            if (gameOver || isPaused) return;
             
+            // Падение до столкновения
             while (movePiece(1, 0)) {
-                gameState.score += 2;
+                score += 2; // Бонус за ускоренное падение
             }
         }
 
-        /**
-         * Помещает текущую фигуру в карман
-         * @function holdCurrentPiece
-         */
+        // Помещение фигуры в карман
         function holdCurrentPiece() {
-            if (!gameState.canHold || gameState.gameOver || gameState.isPaused) return;
+            if (!canHold || gameOver || isPaused) return;
             
-            if (gameState.holdPiece === null) {
-                gameState.holdPiece = {
-                    type: gameState.currentPiece.type,
-                    shape: CONFIG.SHAPES[gameState.currentPiece.type],
+            if (holdPiece === null) {
+                // Если карман пуст - сохраняем текущую фигуру
+                holdPiece = {
+                    type: currentPiece.type,
+                    shape: SHAPES[currentPiece.type],
                     rotation: 0
                 };
-                gameState.currentPiece = gameState.nextPiece;
-                gameState.nextPiece = createPiece();
+                // Берем следующую фигуру
+                currentPiece = nextPiece;
+                nextPiece = createPiece();
             } else {
-                const tempType = gameState.currentPiece.type;
-                gameState.currentPiece.type = gameState.holdPiece.type;
-                gameState.currentPiece.shape = CONFIG.SHAPES[gameState.holdPiece.type];
-                gameState.currentPiece.rotation = 0;
-                gameState.currentPiece.col = Math.floor(
-                    (CONFIG.COLS - gameState.currentPiece.shape[0].length) / 2
-                );
-                gameState.currentPiece.row = 0;
+                // Если в кармане есть фигура - меняем местами
+                const tempType = currentPiece.type;
+                currentPiece.type = holdPiece.type;
+                currentPiece.shape = SHAPES[holdPiece.type];
+                currentPiece.rotation = 0;
+                currentPiece.col = Math.floor((COLS - currentPiece.shape[0].length) / 2);
+                currentPiece.row = 0;
                 
-                gameState.holdPiece.type = tempType;
-                gameState.holdPiece.shape = CONFIG.SHAPES[tempType];
+                holdPiece.type = tempType;
+                holdPiece.shape = SHAPES[tempType];
             }
             
-            gameState.currentPiece.col = Math.floor(
-                (CONFIG.COLS - gameState.currentPiece.shape[0].length) / 2
-            );
-            gameState.currentPiece.row = 0;
+            // Сбрасываем позицию текущей фигуры
+            currentPiece.col = Math.floor((COLS - currentPiece.shape[0].length) / 2);
+            currentPiece.row = 0;
             
-            if (checkCollision(gameState.currentPiece)) {
+            // Проверка на столкновение после замены
+            if (checkCollision(currentPiece)) {
                 endGame();
             }
             
-            gameState.canHold = false;
+            canHold = false; // Запрещаем повторный обмен, пока не упадет следующая фигура
             drawBoard();
         }
 
-        /**
-         * Основной игровой цикл
-         * @function gameLoop
-         */
+        // Игровой цикл
         function gameLoop() {
-            if (gameState.gameOver || gameState.isPaused) return;
+            if (gameOver || isPaused) return;
+            
+            // Падение фигуры на одну клетку вниз
             movePiece(1, 0);
         }
 
-        /**
-         * Завершает игру
-         * @function endGame
-         */
+        // Завершение игры
         function endGame() {
-            gameState.gameOver = true;
-            clearInterval(gameState.dropInterval);
+            gameOver = true;
+            clearInterval(dropInterval);
             
-            document.getElementById('final-score').textContent = gameState.score;
-            document.getElementById('final-level').textContent = gameState.level;
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-level').textContent = level;
             document.getElementById('game-over').style.display = 'block';
         }
 
-        /**
-         * Инициализирует новую игру
-         * @function initGame
-         */
+        // Инициализация игры
         function initGame() {
             initBoard();
-            gameState.score = 0;
-            gameState.level = 1;
-            gameState.linesCleared = 0;
-            gameState.gameOver = false;
-            gameState.isPaused = false;
-            gameState.dropSpeed = CONFIG.INITIAL_SPEED;
-            gameState.holdPiece = null;
-            gameState.canHold = true;
+            score = 0;
+            level = 1;
+            linesCleared = 0;
+            gameOver = false;
+            isPaused = false;
+            dropSpeed = 500;
+            holdPiece = null;
+            canHold = true;
             
-            gameState.currentPiece = createPiece();
-            gameState.nextPiece = createPiece();
+            // Создание начальных фигур
+            currentPiece = createPiece();
+            nextPiece = createPiece();
             
+            // Отрисовка начального состояния
             drawBoard();
             
-            if (gameState.dropInterval) clearInterval(gameState.dropInterval);
-            gameState.dropInterval = setInterval(gameLoop, gameState.dropSpeed);
+            // Запуск игрового цикла
+            if (dropInterval) clearInterval(dropInterval);
+            dropInterval = setInterval(gameLoop, dropSpeed);
             
+            // Скрытие экрана "Игра окончена"
             document.getElementById('game-over').style.display = 'none';
             document.getElementById('pause-btn').textContent = 'Пауза';
         }
 
-        /**
-         * Переключает состояние паузы
-         * @function togglePause
-         */
-        function togglePause() {
-            if (gameState.gameOver) return;
-            
-            gameState.isPaused = !gameState.isPaused;
-            document.getElementById('pause-btn').textContent = 
-                gameState.isPaused ? 'Продолжить' : 'Пауза';
-                
-            if (gameState.isPaused) {
-                clearInterval(gameState.dropInterval);
-            } else {
-                gameState.dropInterval = setInterval(gameLoop, gameState.dropSpeed);
-            }
-        }
-
-        // Обработчики событий
+        // Обработка нажатий клавиш
         document.addEventListener('keydown', (e) => {
-            if (gameState.gameOver && e.key !== 'Enter') return;
+            if (gameOver && e.key !== 'Enter') return;
             
             switch (e.key) {
-                case 'ArrowLeft': movePiece(0, -1); break;
-                case 'ArrowRight': movePiece(0, 1); break;
-                case 'ArrowDown': movePiece(1, 0); break;
-                case 'ArrowUp': rotatePiece(); break;
-                case ' ': dropPiece(); break;
+                case 'ArrowLeft':
+                    movePiece(0, -1);
+                    break;
+                case 'ArrowRight':
+                    movePiece(0, 1);
+                    break;
+                case 'ArrowDown':
+                    movePiece(1, 0);
+                    break;
+                case 'ArrowUp':
+                    rotatePiece();
+                    break;
+                case ' ':
+                    dropPiece();
+                    break;
                 case 'p':
-                case 'P': togglePause(); break;
-                case 'Tab': e.preventDefault(); holdCurrentPiece(); break;
-                case 'Enter': if (gameState.gameOver) initGame(); break;
+                case 'P':
+                    togglePause();
+                    break;
+                case 'Tab':
+                    e.preventDefault();
+                    holdCurrentPiece();
+                    break;
+                case 'Enter':
+                    if (gameOver) initGame();
+                    break;
             }
         });
 
+        // Кнопки управления
         document.getElementById('start-btn').addEventListener('click', initGame);
         document.getElementById('play-again-btn').addEventListener('click', initGame);
         document.getElementById('restart-btn').addEventListener('click', initGame);
         document.getElementById('rotate-btn').addEventListener('click', rotatePiece);
+        
         document.getElementById('pause-btn').addEventListener('click', togglePause);
 
-        // Запуск игры
+        function togglePause() {
+            if (gameOver) return;
+            
+            isPaused = !isPaused;
+            document.getElementById('pause-btn').textContent = 
+                isPaused ? 'Продолжить' : 'Пауза';
+                
+            if (isPaused) {
+                clearInterval(dropInterval);
+            } else {
+                dropInterval = setInterval(gameLoop, dropSpeed);
+            }
+        }
+
+        // Запуск игры при загрузке страницы
         window.onload = initGame;
     </script>
+    <script>
+    window.addEventListener("keydown", function(e) {
+        const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"," "];
+        if (keys.includes(e.key)) {
+            e.preventDefault(); // Отменяет прокрутку
+        }
+    }, { passive: false });
+</script>
 </body>
 </html>
